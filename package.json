@@ -1,0 +1,47 @@
+{
+  "name": "regexp-engine",
+  "version": "0.0.1",
+  "description": "Regexp engine library",
+  "homepage": "http://tsv2013.github.io/regexp-engine",
+  "authors": [
+    "Serge T <@domain.com>"
+  ],
+  "private": false,
+  "license": "MIT",
+  "main": "dist/regexp-engine.js",
+  "keywords": [
+    "regexp",
+    "engine"
+  ],
+  "moduleType": "umd",
+  "ignore": [
+    ".travis.yml",
+    ".coveralls.yml",
+    ".bithoundrc",
+    "deploy-ghpages.cmd"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsv2013/regexp-engine.git"
+  },
+  "scripts": {
+    "build": "webpack",
+    "test": "jest",
+    "testDev": "jest --watch",
+    "release": "standard-version --message \"Release: %s\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^29.2.3",
+    "@types/node": "^7.0.5",
+    "jest": "^29.3.1",
+    "json-loader": "latest",
+    "standard-version": "^9.5.0",
+    "ts-jest": "^29.0.3",
+    "ts-loader": "latest",
+    "typescript": "latest",
+    "underscore": "^1.8.3",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.0"
+  }
+}
