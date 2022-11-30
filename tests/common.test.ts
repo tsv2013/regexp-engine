@@ -80,3 +80,14 @@ test("calculateRPN", () => {
     ])
   ).toBe(2);
 });
+
+test("Basic masks", () => {
+  var re = new RegularExpression("(000) 000-0000");
+  re = new RegularExpression("(999) 000-0000");
+  re = new RegularExpression("(000) XXX-XXXX");
+  re = new RegularExpression("#999");
+  re = new RegularExpression("00000-9999");
+  re = new RegularExpression("ISBN 0-CCCCCCCCC-0");
+  re = new RegularExpression(">L<l*");
+  re = new RegularExpression("");
+});
