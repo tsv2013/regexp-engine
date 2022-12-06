@@ -1,9 +1,9 @@
-# regexp-engine
+# mask-engine
 JavaScript (TypeScript) regexp engine library
 
 ## How to compile this repo
- - git clone https://github.com/tsv2013/regexp-engine.git
- - cd regexp-engine
+ - git clone https://github.com/tsv2013/mask-engine.git
+ - cd mask-engine
  - npm i
  - npm test
  - npm run build

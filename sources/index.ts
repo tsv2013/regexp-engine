@@ -11,9 +11,12 @@ export enum TokenizerStates {
   ParsingGroup = 5,
   ParsingQuantifier = 6,
   ParsingNumber = 7,
-  ParsingBracket = 8
+  ParsingAlternative = 7,
+  ParsingBracket = 8,
+  ParsingOther = 1000
 }
-export enum KnownStringComponents {
+
+export enum KnownSymbolClasses {
   Symbol = 1,
   Escape = 2,
   Bracket = 3,
@@ -28,36 +31,44 @@ export enum KnownStringComponents {
 }
 
 const symbolClasses = {
-  [KnownStringComponents.Digit]: "0123456789",
-  [KnownStringComponents.Bracket]: "()",
-  [KnownStringComponents.GroupBracket]: "[]",
-  [KnownStringComponents.Alternative]: "|",
-  [KnownStringComponents.Escape]: "\\",
-  [KnownStringComponents.Quantifier]: "*+?",
-  [KnownStringComponents.QuantifierBracket]: "{}",
-  [KnownStringComponents.Anchor]: "^$",
-  [KnownStringComponents.Delimiter]: "\r\r\n",
-  [KnownStringComponents.Symbol]: ".",
+  [KnownSymbolClasses.Symbol]: "09#LlXxCc",
+  [KnownSymbolClasses.Quantifier]: "*+?",
+  [KnownSymbolClasses.QuantifierBracket]: "{}",
+  [KnownSymbolClasses.Bracket]: "()",
+  [KnownSymbolClasses.GroupBracket]: "[]",
+  [KnownSymbolClasses.Alternative]: "|",
+  [KnownSymbolClasses.Escape]: "\\",
+  [KnownSymbolClasses.Anchor]: "^$",
+  [KnownSymbolClasses.Delimiter]: "\r\r\n",
+  [KnownSymbolClasses.Digit]: "0123456789",
+  [KnownSymbolClasses.Other]: "",
 }
 
-var tokenStateMachine: any = {};
+var tokenStateMachine: {[state: number]: {[symbolClass: number]: TokenizerStates}} = {};
 tokenStateMachine[TokenizerStates.Started] = {
-  1: TokenizerStates.Started,
-  2: TokenizerStates.ParsingNumber,
-  3: TokenizerStates.ParsingBracket,
+  [KnownSymbolClasses.Delimiter]: TokenizerStates.Started,
+  [KnownSymbolClasses.Symbol]: TokenizerStates.ParsingSymbol,
+  [KnownSymbolClasses.Digit]: TokenizerStates.Error,
+  [KnownSymbolClasses.Quantifier]: TokenizerStates.ParsingQuantifier,
+  [KnownSymbolClasses.QuantifierBracket]: TokenizerStates.ParsingNumber,
+  [KnownSymbolClasses.Bracket]: TokenizerStates.ParsingBracket
 };
 tokenStateMachine[TokenizerStates.ParsingNumber] = {
-  1: TokenizerStates.Finished,
-  2: TokenizerStates.ParsingNumber,
-  3: TokenizerStates.Finished,
+  [KnownSymbolClasses.QuantifierBracket]: TokenizerStates.Finished,
+  [KnownSymbolClasses.Digit]: TokenizerStates.ParsingNumber,
 };
 tokenStateMachine[TokenizerStates.ParsingBracket] = {
-  1: TokenizerStates.Finished,
-  2: TokenizerStates.Finished,
-  3: TokenizerStates.Finished,
+  [KnownSymbolClasses.Bracket]: TokenizerStates.Finished,
+  [KnownSymbolClasses.QuantifierBracket]: TokenizerStates.Finished,
+  [KnownSymbolClasses.Symbol]: TokenizerStates.Finished,
+};
+tokenStateMachine[TokenizerStates.ParsingSymbol] = {
+  [KnownSymbolClasses.Bracket]: TokenizerStates.Finished,
+  [KnownSymbolClasses.QuantifierBracket]: TokenizerStates.Finished,
+  [KnownSymbolClasses.Symbol]: TokenizerStates.Finished,
 };
 
-export class RegularExpression {
+export class MaskEngine {
   static operations = {
     "+": {
       priority: 0,
@@ -115,22 +126,22 @@ export class RegularExpression {
 
   private isOfMoreOrEqualPriority(currentOp: string, otherOp: string): boolean {
     return (
-      RegularExpression.operations[currentOp].priority <=
-      RegularExpression.operations[otherOp].priority
+      MaskEngine.operations[currentOp].priority <=
+      MaskEngine.operations[otherOp].priority
     );
   }
 
-  constructor(expression: string) {
-    this.nfa = this.buildNFAfromRPN(this.convertToRPN(this.tokenize(expression)));
+  constructor(public readonly mask: string) {
+    // this.nfa = this.buildNFAfromRPN(this.convertToRPN(this.tokenize(mask)));
   }
 
-  classifySymbol(symbol: string): KnownStringComponents {
-    for (let component in KnownStringComponents) { 
-      if(symbolClasses[KnownStringComponents[component]].indexOf(symbol) != -1) {
+  classifySymbol(symbol: string): KnownSymbolClasses {
+    for (let component in KnownSymbolClasses) { 
+      if(symbolClasses[component].indexOf(symbol) != -1) {
         return component as any;
       }
     }
-    return KnownStringComponents.Other;
+    return KnownSymbolClasses.Other;
   }
 
   scanToken(str: string, start: number) {
@@ -138,20 +149,17 @@ export class RegularExpression {
     var workingState = TokenizerStates.Error;
     var tokenString = "";
     var i = start;
-    while (
-      i < str.length &&
-      (state !== TokenizerStates.Finished && state !== TokenizerStates.Error)
-    ) {
+    while (i < str.length) {
       var symbolClass = this.classifySymbol(str[i]);
       state = tokenStateMachine[state][symbolClass];
-      if (
-        state === TokenizerStates.ParsingNumber ||
-        state === TokenizerStates.ParsingBracket
-      ) {
+      if(state === TokenizerStates.Finished || state === TokenizerStates.Error) {
+        break;
+      }
+      else if (state === TokenizerStates.Started) {
+        i++;
+      } else {
         workingState = state;
         tokenString += str[i++];
-      } else if (state === TokenizerStates.Started) {
-        i++;
       }
     }
     if (tokenString === "") {
@@ -209,7 +217,7 @@ export class RegularExpression {
         continue;
       }
       if (
-        Object.keys(RegularExpression.operations).indexOf(tokens[i].type) !==
+        Object.keys(MaskEngine.operations).indexOf(tokens[i].type) !==
         -1
       ) {
         if (stack.length > 0) {
@@ -218,11 +226,11 @@ export class RegularExpression {
             rpn[j++] = currToken;
           } while (
             stack.length > 0 &&
-            symbolClasses[KnownStringComponents.Bracket].indexOf(rpn[j - 1].type) === -1 &&
+            symbolClasses[KnownSymbolClasses.Bracket].indexOf(rpn[j - 1].type) === -1 &&
             this.isOfMoreOrEqualPriority(tokens[i].type, rpn[j - 1].type)
           );
           if (
-            symbolClasses[KnownStringComponents.Bracket].indexOf(rpn[j - 1].type) !== -1 ||
+            symbolClasses[KnownSymbolClasses.Bracket].indexOf(rpn[j - 1].type) !== -1 ||
             !this.isOfMoreOrEqualPriority(tokens[i].type, rpn[j - 1].type)
           ) {
             stack.push(currToken);
@@ -251,7 +259,7 @@ export class RegularExpression {
       if (rpn[i].type === "n") {
         operands.push(rpn[i]);
       } else {
-        var func = RegularExpression.operations[rpn[i].type].function;
+        var func = MaskEngine.operations[rpn[i].type].function;
         var args = operands
           .splice(operands.length - func.length)
           .map(op => op.value);

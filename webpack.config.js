@@ -2,10 +2,10 @@ var _ = require('underscore');
 var webpack = require('webpack');
 var packageJson = require('./package.json');
 
-var libraryName = 'regexp-engine';
+var libraryName = packageJson.name;
 var banner = [
-    "regexp-engine - Regexp engine library v" + packageJson.version,
-    "Copyright (c) 2015-2017 TSV  - http://github.com/tsv2013/regexp-engine",
+    packageJson.name + " - Mask engine library v" + packageJson.version,
+    "Copyright (c) 2022-2023 TSV  - http://github.com/tsv2013/mask-engine",
     "License: MIT (http://www.opensource.org/licenses/mit-license.php)",
 ].join("\n");
 

@@ -1,14 +1,14 @@
 {
-  "name": "regexp-engine",
+  "name": "mask-engine",
   "version": "0.0.1",
-  "description": "Regexp engine library",
-  "homepage": "http://tsv2013.github.io/regexp-engine",
+  "description": "Mask engine library",
+  "homepage": "http://tsv2013.github.io/mask-engine",
   "authors": [
     "Serge T <@domain.com>"
   ],
   "private": false,
   "license": "MIT",
-  "main": "dist/regexp-engine.js",
+  "main": "dist/mask-engine.js",
   "keywords": [
     "regexp",
     "engine"
@@ -22,7 +22,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/tsv2013/regexp-engine.git"
+    "url": "https://github.com/tsv2013/mask-engine.git"
   },
   "scripts": {
     "build": "webpack",
